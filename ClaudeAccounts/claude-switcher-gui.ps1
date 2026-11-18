@@ -39,33 +39,7 @@ foreach ($s in @($ProfileScript, $SessionScript)) {
 
 # --- State readers (mirror the scripts; never trust cached labels) -----------
 
-function Get-ClaudePackageFamily {
-    foreach ($n in @('Claude', '*Claude*')) {
-        try {
-            $p = @(Get-AppxPackage -Name $n -ErrorAction Stop)
-            if ($p.Count -gt 0) { return $p[0].PackageFamilyName }
-        } catch { }
-    }
-    return 'Claude_pzs8sxrjxfjjc'   # last-known default
-}
-
-function Get-ClaudeAumid {
-    try {
-        $a = @(Get-StartApps -ErrorAction Stop | Where-Object { $_.Name -eq 'Claude' })
-        if ($a.Count -gt 0) { return $a[0].AppID }
-    } catch { }
-    return ((Get-ClaudePackageFamily) + '!Claude')
-}
-
-function Resolve-AppRoot {
-    $fam = Get-ClaudePackageFamily
-    foreach ($c in @(
-        (Join-Path $env:APPDATA 'Claude'),
-        (Join-Path $env:LOCALAPPDATA "Packages\$fam\LocalCache\Roaming\Claude"))) {
-        if (Test-Path (Join-Path $c 'config.json')) { return $c }
-    }
-    return $null
-}
+. (Join-Path $PSScriptRoot 'claude-discovery.ps1')
 
 $AppRoot      = $null
 $Store        = Join-Path $env:USERPROFILE '.claude-profiles'
@@ -276,6 +250,7 @@ $profButtons = @(
     @{ Text = 'Rename...';          Y = 120 ; Name = 'rename' },
     @{ Text = 'Set label...';       Y = 156 ; Name = 'label'  },
     @{ Text = 'Delete...';          Y = 192 ; Name = 'delete' },
+    @{ Text = 'Open Claude Desktop'; Y = 275; Name = 'open' },
     @{ Text = 'Diagnostics';        Y = 238 ; Name = 'doctor' }
 )
 $profBtn = @{}
@@ -375,12 +350,13 @@ function Set-ActionLayout {
 $lblProfHint.Visible = $false
 $lblAcct.Visible = $false
 $lblSessHint.Visible = $false
-Set-ActionLayout $tabProfiles $lvProfiles @($profBtn['save'], $profBtn['add'], $profBtn['switch'], $profBtn['label'], $profBtn['doctor']) $null
+Set-ActionLayout $tabProfiles $lvProfiles @($profBtn['open'], $profBtn['save'], $profBtn['add'], $profBtn['switch'], $profBtn['label'], $profBtn['doctor']) $null
 Set-ActionLayout $tabSessions $lvSessions @($btnCopySession) $cbAccount
 
 function Update-All {
-    $script:AppRoot = Resolve-AppRoot
-    if ($AppRoot) { $script:SessionsRoot = Join-Path $AppRoot 'claude-code-sessions' }
+    $desktop = Get-ClaudeDesktop
+    $script:AppRoot = $desktop.Root
+    $script:SessionsRoot = if ($AppRoot) { Join-Path $AppRoot 'claude-code-sessions' }
     $live = Get-LiveUuid
     $script:Profiles = @(Get-Profiles)
 
@@ -392,7 +368,7 @@ function Update-All {
     } elseif ($live) {
         $header.Text = "Signed in: $(Get-ShortUuid $live)   (no matching profile)"
     } else {
-        $header.Text = 'Signed in: unknown - is the desktop app installed?'
+        $header.Text = if ($AppRoot) { 'Open Claude Desktop and sign in, then click Refresh.' } else { $desktop.Status }
     }
 
     $lvProfiles.Items.Clear()
@@ -502,7 +478,7 @@ $profBtn['add'].Add_Click({
     }
 
     $before = Get-LiveUuid
-    Start-Process ('shell:AppsFolder\' + (Get-ClaudeAumid))
+    try { Start-DetectedClaude (Get-ClaudeDesktop) } catch { Add-Output $_.Exception.Message; return }
 
     $r = [System.Windows.Forms.MessageBox]::Show(
         ("Claude is opening.`n`n" +
@@ -576,6 +552,7 @@ $profBtn['delete'].Add_Click({
     Update-All
 })
 
+$profBtn['open'].Add_Click({ try { Start-DetectedClaude (Get-ClaudeDesktop) } catch { Add-Output $_.Exception.Message } })
 $profBtn['doctor'].Add_Click({ Invoke-Tool $ProfileScript @('doctor') })
 
 $btnCopySession.Add_Click({

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Move Claude Code session transcripts between your two accounts.
 
@@ -40,29 +40,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Get-ClaudePackageFamily {
-    foreach ($n in @('Claude', '*Claude*')) {
-        try {
-            $p = @(Get-AppxPackage -Name $n -ErrorAction Stop)
-            if ($p.Count -gt 0) { return $p[0].PackageFamilyName }
-        } catch { }
-    }
-    return 'Claude_pzs8sxrjxfjjc'   # last-known default
-}
+. (Join-Path $PSScriptRoot 'claude-discovery.ps1')
 
-function Resolve-AppRoot {
-    $fam = Get-ClaudePackageFamily
-    $candidates = @(
-        (Join-Path $env:APPDATA 'Claude'),
-        (Join-Path $env:LOCALAPPDATA "Packages\$fam\LocalCache\Roaming\Claude")
-    )
-    foreach ($c in $candidates) {
-        if (Test-Path (Join-Path $c 'claude-code-sessions')) { return $c }
-    }
-    throw ("Cannot find the Claude app data folder. Tried:`n  " + ($candidates -join "`n  "))
-}
-
-$AppRoot      = Resolve-AppRoot
+$desktop = Get-ClaudeDesktop
+if (!$desktop.Root) { throw $desktop.Status }
+$AppRoot = $desktop.Root
 $SessionsRoot = Join-Path $AppRoot 'claude-code-sessions'
 $ProjectsRoot = Join-Path $env:USERPROFILE '.claude\projects'
 $Store        = Join-Path $env:USERPROFILE '.claude-profiles'

@@ -65,39 +65,12 @@ $Marker     = Join-Path $Store 'current.txt'
 # The package family name is publisher-derived, so it is the same on every
 # machine running the Store build -- but discover it anyway, so a republished
 # package or a differently-packaged build does not silently break paths.
-function Get-ClaudePackageFamily {
-    foreach ($n in @('Claude', '*Claude*')) {
-        try {
-            $p = @(Get-AppxPackage -Name $n -ErrorAction Stop)
-            if ($p.Count -gt 0) { return $p[0].PackageFamilyName }
-        } catch { }
-    }
-    return 'Claude_pzs8sxrjxfjjc'   # last-known default
-}
+. (Join-Path $PSScriptRoot 'claude-discovery.ps1')
 
-function Get-ClaudeAumid {
-    try {
-        $a = @(Get-StartApps -ErrorAction Stop | Where-Object { $_.Name -eq 'Claude' })
-        if ($a.Count -gt 0) { return $a[0].AppID }
-    } catch { }
-    return ((Get-ClaudePackageFamily) + '!Claude')
-}
-
-function Resolve-AppRoot {
-    $fam = Get-ClaudePackageFamily
-    $candidates = @(
-        (Join-Path $env:APPDATA 'Claude'),
-        (Join-Path $env:LOCALAPPDATA "Packages\$fam\LocalCache\Roaming\Claude")
-    )
-    foreach ($c in $candidates) {
-        if (Test-Path (Join-Path $c 'Local State')) { return $c }
-    }
-    throw ("Cannot find the Claude app data folder. Tried:`n  " + ($candidates -join "`n  ") +
-           "`nIs the Claude desktop app installed and signed in at least once?")
-}
-
-$AppRoot = Resolve-AppRoot
-$Aumid   = Get-ClaudeAumid
+$desktop = Get-ClaudeDesktop
+if (!$desktop.Root) { throw $desktop.Status }
+if ($Command -eq 'switch' -and !$NoLaunch -and !$desktop.Launch) { throw 'No Claude Desktop launcher found. Open Claude Desktop from Windows Start and retry.' }
+$AppRoot = $desktop.Root
 
 # 'Local State' must travel with 'Network' -- it holds the DPAPI-wrapped AES key
 # the cookie database is encrypted with. Split them and the cookies become
@@ -689,7 +662,7 @@ switch ($Command) {
         Write-Host "Switched to '$Name' -> $acct" -ForegroundColor Green
 
         if (-not $NoLaunch) {
-            Start-Process "shell:AppsFolder\$Aumid"
+            Start-DetectedClaude $desktop
             Write-Host "Relaunching Claude..." -ForegroundColor DarkGray
         }
     }

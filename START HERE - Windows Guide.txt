@@ -11,6 +11,9 @@ Already see Personal with the state "ok"? Go straight to step 3.
    The switcher is the window with the Accounts and Sessions tabs.
    Claude Desktop is the separate window where you sign in and use Claude.
 
+If the switcher asks you to sign in, click Open Claude Desktop, sign in
+   there, then return to the switcher and click Refresh.
+
 2. Save your first account
    Sign in to your first account in Claude Desktop. Finish any active
    response because saving a profile briefly closes Claude.
