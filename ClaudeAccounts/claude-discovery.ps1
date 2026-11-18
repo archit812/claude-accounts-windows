@@ -1,5 +1,9 @@
 # Discover the installed desktop application separately from its per-user data.
 function Get-ClaudeDesktop {
+    param(
+        [string[]]$LocalFolders = @($env:LOCALAPPDATA, [Environment]::GetFolderPath('LocalApplicationData')),
+        [string[]]$RoamingFolders = @($env:APPDATA, [Environment]::GetFolderPath('ApplicationData'))
+    )
     $names = @('Claude', 'Claude Desktop')
     $entries = @(Get-StartApps -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $names })
     $packages = @(Get-AppxPackage -Name '*Claude*' -ErrorAction SilentlyContinue | Where-Object {
@@ -18,7 +22,7 @@ function Get-ClaudeDesktop {
     }
 
     $roots = @()
-    foreach ($local in @($env:LOCALAPPDATA, [Environment]::GetFolderPath('LocalApplicationData')) | Select-Object -Unique) {
+    foreach ($local in $LocalFolders | Select-Object -Unique) {
         if (!$local) { continue }
         foreach ($family in @($families + 'Claude_pzs8sxrjxfjjc') | Select-Object -Unique) {
             if ($family -and $family -notmatch '[\\/]') {
@@ -26,7 +30,7 @@ function Get-ClaudeDesktop {
             }
         }
     }
-    foreach ($roaming in @($env:APPDATA, [Environment]::GetFolderPath('ApplicationData')) | Select-Object -Unique) {
+    foreach ($roaming in $RoamingFolders | Select-Object -Unique) {
         if ($roaming) { $roots += Join-Path $roaming 'Claude' }
     }
     $ready = @($roots | Select-Object -Unique | Where-Object {
