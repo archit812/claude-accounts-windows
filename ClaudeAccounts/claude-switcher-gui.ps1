@@ -67,7 +67,7 @@ function Resolve-AppRoot {
     return $null
 }
 
-$AppRoot      = Resolve-AppRoot
+$AppRoot      = $null
 $Store        = Join-Path $env:USERPROFILE '.claude-profiles'
 $SessionsRoot = if ($AppRoot) { Join-Path $AppRoot 'claude-code-sessions' } else { $null }
 $ProjectsRoot = Join-Path $env:USERPROFILE '.claude\projects'
@@ -425,6 +425,7 @@ function Update-All {
 }
 
 function Update-Sessions {
+    if ($tabs.SelectedTab -ne $tabSessions) { return }
     $lvSessions.Items.Clear()
     if ($cbAccount.SelectedIndex -lt 0) { return }
     $p = $script:Profiles[$cbAccount.SelectedIndex]
@@ -623,6 +624,10 @@ $tip.SetToolTip($cbAccount,      "Choose which account's session list to show.")
 $tip.SetToolTip($btnCopySession, "Add the selected conversation to the other account's list.`nThe original stays put - both accounts read the same transcript file.`nRestart Claude to see it appear.")
 $tip.SetToolTip($lvSessions,     "Sessions belonging to the chosen account. 'MISSING' means the transcript file is gone, so copying it would open empty.")
 
-Update-All
+$tabs.Add_SelectedIndexChanged({ if ($tabs.SelectedTab -eq $tabSessions) { Update-Sessions } })
+$form.Add_Shown({
+    $form.Activate()
+    try { Update-All } catch { Add-Output ("Startup error: " + $_.Exception.Message) }
+})
 Add-Output 'Use Save current as for your first account, or Add account for your second.'
 [void]$form.ShowDialog()

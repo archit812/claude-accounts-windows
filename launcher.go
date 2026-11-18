@@ -57,7 +57,9 @@ func run() error {
 	}
 	shell := filepath.Join(os.Getenv("SystemRoot"), "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
 	cmd := exec.Command(shell, "-NoLogo", "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(version, "claude-switcher-gui.ps1"))
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	// CREATE_NO_WINDOW suppresses the console without hiding the first GUI window.
+	const createNoWindow = 0x08000000
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("%v\n%s", err, out)
 	}
