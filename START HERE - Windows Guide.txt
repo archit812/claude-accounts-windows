@@ -1,0 +1,62 @@
+Claude Accounts for Windows
+Step-by-step guide
+
+Already see Personal with the state "ok"? Go straight to step 3.
+
+1. Open the switcher
+   Use a Windows 10 or 11 x64 PC with the Microsoft Store (MSIX) version
+   of Claude Desktop installed. Have both Claude accounts ready. The
+   original switcher lists a subscription for each account as a requirement.
+   Save Claude Accounts.exe to your desktop and double-click it.
+   The switcher is the window with the Accounts and Sessions tabs.
+   Claude Desktop is the separate window where you sign in and use Claude.
+
+2. Save your first account
+   Sign in to your first account in Claude Desktop. Finish any active
+   response because saving a profile briefly closes Claude.
+   In the switcher's Accounts tab, click "Save current as...".
+   Enter Personal and confirm. Look for a Personal row with the state "ok".
+   If needed, click Refresh in the upper-right corner.
+
+3. Add your second account
+   In the switcher, click "Add account..." and enter Work as the name.
+   Leave the switcher's instruction box open. In Claude Desktop, open
+   the account menu, log out, then sign in with your second account.
+   Check the email address in Claude Desktop. Once the second account
+   is signed in, return to the switcher's instruction box and click OK.
+   If asked for a display name, enter a label you recognize.
+   Click Refresh. You should see Personal and Work, each marked "ok".
+
+4. Switch accounts during everyday use
+   Let your current task finish. In Accounts, double-click the profile
+   you want and confirm. Claude Desktop closes and reopens.
+   Check the "Signed in" line at the top of the switcher to see which
+   profile is active. Repeat this step whenever you want to switch back.
+
+5. Continue a local Claude Code conversation on the other account
+   Before switching, open Sessions in the switcher. Choose the account
+   where the conversation started, then select the conversation by title.
+   Click "Copy to other account". Check the destination and confirm.
+   Go back to Accounts and double-click the destination profile.
+   When Claude Desktop reopens, open its Code tab and select that session.
+   This action makes the selected local coding transcript available to
+   the other account. Ordinary Claude chats and account memory are separate.
+
+If something looks wrong
+   Empty list or "no matching profile" on first use: click Accounts,
+   then "Save current as..." while signed in to the account you want to save.
+
+   Only Personal appears after the second login: return to the switcher's
+   "Add an account" box and click OK, then Refresh.
+
+   The switcher says it still sees the same account: cancel the save.
+   Check which account is active in Claude Desktop's Code tab, then
+   repeat step 3 using the second account.
+
+   A profile shows "INCOMPLETE" or a save fails: in Accounts, click
+   Diagnostics and read the message at the bottom of the window.
+
+Build information
+   This unsigned Windows app packages code from Sevin47's MIT-licensed
+   claude-desktop-switcher. The executable format and bundled scripts were
+   verified. A live Windows account switch has not been tested for this build.
